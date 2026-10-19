@@ -98,9 +98,12 @@ $ chroot /mnt /bin/bash
 $ export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/bin:/sbin
 $ ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 $ sed 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
+$ locale-gen
 $ echo 'LANG=en_US-UTF-8' >> /etc/local.conf
 $ echo "ubuntu" | tee /etc/hostname
 $ echo 'do_symlinks = no' >> /etc/kernel-img.conf
+$ echo "luks-<uuid-partition-encrypted>  UUID=<uuid-partition-encrypted> none luks" >> /etc/crypttab #uuid of /dev/vda2
+$ echo 'add_dracutmodules+= "crypt" '|tee /etc/dracut.conf.d/crypt.conf
 $ apt update && apt install linux-image-generic grub-efi-amd64 efibootmgr ubuntu-server lvm2 cryptsetup cryptsetup-initramfs linux-modules-7.0.0-14-generic
 $ passwd
 $ useradd -mG sudo <username>
@@ -112,9 +115,7 @@ $ hwclock --hctosys
 # Crypttab setup
 
 ```bash
-$ echo 'add_dracutmodules+= "crypt" '|tee /etc/dracut.conf.d/crypt.conf
-$ echo "luks-<uuid-partition-encrypted>  UUID=<uuid-partition-encrypted> none luks" >> /etc/crypttab #uuid of /dev/vda2
-$ dracut --force --generate-all
+$ update-initramfs -c -k all -v
 ```
 
 # Install bootloader
