@@ -32,4 +32,4 @@ mkarchiso -v -r -w /tmp/archiso-tmp -o ./archiso ./archiso/profile && rm -rf ./t
 
 
 That's it you have a ISO that can bootstrap debian, alpine, fedora based distros.</br>
-For more customization with archiso refer (ArchISO wiki)[https://wiki.archlinux.org/title/Archiso]
+For more customization with archiso refer [ArchISO wiki](https://wiki.archlinux.org/title/Archiso)
