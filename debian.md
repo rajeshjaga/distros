@@ -70,7 +70,7 @@ $ lsblk
 ### Now we use bootstrap base system, before installing base packages, we need to install debootstrap
 
 ```bash
-$ pacman -Sy debootstrap debian-archive-keyring
+$ pacman -Sy debootstrap distribution-gpg-keys
 ```
 
 ### Bootstraping and base installing packages, also installing keyring to gpg check packages

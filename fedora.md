@@ -1,20 +1,28 @@
 # FEDORA
 
-### PREPARE DISK
+### Disk partition
 ```bash
-cryptsetup luksFormat /dev/vda2
-$ cryptsetup open /dev/vda2 fedora
-$ pvcreate /dev/mapper/fedora
-$ vgcreate fedora_vg /dev/mapper/fedora
-$ lvcreate -L 2G fedora_vg -n swap
-$ lvcreate -l 100%FREE  fedora_vg -n root
-$ mount /dev/fedora_vg/root /mnt
-$ mkfs.ext4 /dev/fedora_vg/root
-$ mount /dev/fedora_vg/root /mnt
-$ mkswap /dev/fedora_vg/swap
-$ swapon /dev/mapper/fedora_vg-swap
-$ mkfs.fat -F 32 /dev/vda1
-$ mount -m /dev/vda1 /mnt/boot
+parted -- /dev/vda mklabel gpt
+parted -- /dev/vda mkpart ESP fat32 1M 1G
+parted -- /dev/vda mkpart '""' 1G 100%
+```
+
+### LVM partition
+```bash
+pvcreate /dev/vda2
+vgcreate suse /dev/vda2
+lvcreate -n swap -L 2G <distro>
+lvcreate -n root -l 100%FREE <distro>
+```
+
+### Mounting drives in the right places
+```bash
+mkfs.ext4 /dev/<distro>/root
+mount /dev/<distro>/root /mnt
+mkswap /dev/<distro>/swap
+swapon /dev/<distro>/swap
+mkfs.fat -F 32 /dev/vda1
+mount -m /dev/vda1 /mnt/boot
 ```
 
 ### Install required tools for the base install of the distro(fedora)
@@ -35,6 +43,8 @@ $ export UPDATESURL=https://dl.fedoraproject.org/pub/fedora/linux/updates/testin
 
 ### Base installation
 ```bash
+$ pacman -S dnf distribution-gpg-keys
+$ rpm --root=/mnt --import /usr/share/distribution-gpg-keys/fedora/RPM-GPG-PRIMARY-fedora-45-key
 $ dnf --installroot=/mnt --repofrompath=fedora,$BASEURL --releasever=45 group install -y "Core"
 ```
 
@@ -54,39 +64,55 @@ $ mount -t efivarfs efivarfs /mnt/sys/firmware/efi/efivars
 ### Chroot in the the new system to configure system
 
 ```bash
+$ genfstab -U /mnt >> /mnt/etc/fstab
 $ chroot /mnt /bin/bash
 $ export PATH=/usr/local/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/bin:/sbin
 $ ln -sf /usr/share/zoneinfo/Asia/Kolkata /etc/localtime
 $ dnf install kernel kernel-headers grub2-efi-x64 efibootmgr cryptsetup lvm2 grub2-pc shim vim  -y
 ```
 
+### Prep the storage, lvm and cryptsetup before installing base system
 ```bash
-dnf install kernel kernel-headers  grub2-efi-x64 grub2-pc shim vim  -y
-dnf install efibootmgr cryptsetup lvm2  -y
 cat << EOF > /etc/crypttab
 luks-<UUID of or the partition> UUID=<UUID-Partition2> none luks
 EOF
 echo "LANG=en_US.UTF-8" >> /etc/locale.conf
 echo 'do_symlinks = no' >> /etc/kernel-img.conf
+echo 'add_dracutmodules+=" crypt lvm "' | tee /etc/dracut.conf.d/
+```
+
+### Install Minimal system
+```bash
+dnf install kernel kernel-headers kernel-modules-extra grub2-efi-x64 shim efibootmgr cryptsetup lvm2 glibc-langpack-en vim git -y
 dracut --regenerate-all --force
-vim /etc/dracut.conf.d/
-dracut --regenerate-all --force
+```
+
+### Verify LVM and crypstsetup is in initramfs
+```bash
 lsinitrd /boot/initramfs-*.img | grep -E "lvm|luks"
-lsinitrd /boot/initramfs-*.img | grep -E "lvm"
-lsinitrd /boot/initramfs-7.2.12-300.fc45.x86_64.img | grep -E "lvm"
-lsinitrd /boot/initramfs-7.2.12-300.fc45.x86_64.img | grep -E "lvm|luks"
-lsinitrd /boot/initramfs-7.2.12-300.fc45.x86_64.img | grep -E "luks"
-dnf install kernel-modules-extra -y
-dnf install --reinstall grub2-efi-x64 efibootmgr
-dnf install grub2-efi-x64 efibootmgr --reinstall
-dnf reinstall grub2-efi-x64 efibootmgr -y
+```
+
+### Setup the system for basic user, selinux on root and root password
+```bash
+ls -Z /usr/lib/systemd/systemd # if the first character of this command output is ? then do below command to fix system
+setfiles -F -v /etc/selinux/targeted/contexts/files/file_contexts /
 passwd
-dnf install glibc-langpack-en
-localectl set-locale LANG=en_US.UTF-8
-localectl -a
-ls -Z /usr/lib/systemd/systemd
-sestatus
 useradd -mG wheel <username>
 passwd <username>
-EDITOR=vim visudo
+```
+
+### Installing grub (the dnf command run the scriptlet for grub but fails to register in BIOS
+```bash
+dnf install grub2-efi-x64-modules grub2-tools grubby grub2-tools-efi grub-tools-extra -y
+grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Fedora --recheck --force
+grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=Fedora --recheck --removable --force
+grub2-mkconfig -o /boot/grub2/grub.cfg
+```
+
+### Gracefully unmount the system
+```bash
+exit
+umount -R /mnt
+swapoff -a
+cryptsetup close <crypsetup-name>
 ```
