@@ -1,5 +1,6 @@
-# Installation of linux distribution via ArchLinux ISO
-
+# DISTRO ALL-in-ONE
+Installation of linux distributions via ArchLinux ISO
+</br>
 Yes, You can almost install all the linux distros such as debian and debian based, fedora and fedora based, any source based distro(gentoo, LFS), Nix OS, obviously Arch Linux
 
 ## Index
@@ -30,5 +31,5 @@ mkarchiso -v -r -w /tmp/archiso-tmp -o ./archiso ./archiso/profile && rm -rf ./t
 ```
 
 
-That's it you have a ISO that can bootstrap debian, alpine, fedora based distros.
+That's it you have a ISO that can bootstrap debian, alpine, fedora based distros.</br>
 For more customization with archiso refer https://wiki.archlinux.org/title/Archiso
