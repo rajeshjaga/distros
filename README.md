@@ -10,7 +10,7 @@ Yes, You can almost install all the linux distros such as debian and debian base
 - [Rockylinux](./rockylinux.md.md)
 - [Ubuntu](./ubuntu.md)
 
-# Create a latest Arch installation medium, follow below instructions:
+# Create a latest Arch installation medium(optional):
 
 Use a ArchLinux medium to create this iso, either use a premade from [ArchLinux ISO](https://archlinux.org/download/) boot into vm or on a machine then copy to other drive or usb
 
@@ -32,4 +32,4 @@ mkarchiso -v -r -w /tmp/archiso-tmp -o ./archiso ./archiso/profile && rm -rf ./t
 
 
 That's it you have a ISO that can bootstrap debian, alpine, fedora based distros.</br>
-For more customization with archiso refer https://wiki.archlinux.org/title/Archiso
+For more customization with archiso refer (ArchISO wiki)[https://wiki.archlinux.org/title/Archiso]
